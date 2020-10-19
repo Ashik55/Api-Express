@@ -1,0 +1,2073 @@
+const mysql = require("mysql");
+const express = require("express");
+const app = express();
+var bodyParser = require("body-parser");
+var nodemailer = require("nodemailer");
+// const jwt = require('jsonwebtoken');
+
+const fileUpload = require("express-fileupload");
+const cors = require("cors");
+const morgan = require("morgan");
+const _ = require("lodash");
+
+var multer, storage, path, crypto;
+multer = require("multer");
+path = require("path");
+crypto = require("crypto");
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json({ type: "application/*+json" }));
+
+
+//add other middleware
+app.use(cors());
+app.use(bodyParser.json());
+app.use(morgan("dev"));
+app.use(express.static("uploads"));
+app.listen(3001);
+
+
+
+app.get('/test', function(req ,res){
+
+    res.send('tonmoy');
+
+});
+
+
+
+
+// * * * * * *  * * * * * * * * * *  * * * * * * * * *  * * * * * * * * * * Aashiqqqq * * * * * * * * *  * * * * * * * * * *  * * * * * * * * *  * * * * * * * * * *  * * * * * * * * *  * * * * * * * * * *  * * *
+
+
+// //json WebToken
+
+
+// //Test post Request with token verification
+
+// app.post('/test/posts', verifyToken, (req, res) => {  
+//   jwt.verify(req.token, 'secretkey', (err, authData) => {
+//     if(err) {
+//       res.sendStatus(403);
+//     } else {
+//         //Token Verify Successfull Do whatever you want
+        
+//       res.json({
+//         message: 'Post created successfully...'
+//       });
+//     }
+//   });
+// });
+
+
+
+// app.post('/ash/login', (req, res) => {
+    
+//   // Mock user
+//   const user = {
+//     id: 1, 
+//     username: 'brad',
+//     email: 'brad@gmail.com'
+//   }
+
+//   jwt.sign({user}, 'secretkey', { expiresIn: '365d' }, (err, token) => {
+//     res.json({
+//       token
+//     });
+//   });
+// });
+
+
+// // FORMAT OF TOKEN
+// // Authorization: Bearer <access_token>
+
+// // Verify Token
+// function verifyToken(req, res, next) {
+//   // Get auth header value
+//   const bearerHeader = req.headers['authorization'];
+//   // Check if bearer is undefined
+//   if(typeof bearerHeader !== 'undefined') {
+//     // Split at the space
+//     const bearer = bearerHeader.split(' ');
+//     // Get token from array
+//     const bearerToken = bearer[1];
+//     // Set the token
+//     req.token = bearerToken;
+//     // Next middleware
+//     next();
+//   } else {
+//     // Forbidden
+//     res.sendStatus(403);
+//   }
+  
+  
+
+
+
+
+
+
+// Email exist or not 
+app.get('/exist_email/:email', function(req, res) {
+    connection.query('SELECT email FROM users WHERE email ="' + req.params.email + '"', function(err, result) {
+        if (err) throw err;
+        console.log(result);
+
+        if (result.length === 0) {
+            // Email not exist
+            res.send('false')
+
+        } else {
+            // Email exist
+            res.send('true')
+        }
+
+    });
+
+});
+
+
+// Number exist or not 
+app.get('/exist_number/:number', function(req, res) {
+    connection.query('SELECT number FROM users WHERE number ="' + req.params.number + '"', function(err, result) {
+        if (err) throw err;
+        console.log(result);
+        
+    
+
+        if (result.length === 0) {
+            // Number not exist
+            res.send(result)
+
+        } else {
+            // Number exist
+            res.send('true')
+        }
+
+    });
+
+});
+
+// UserID exist or not 
+app.get('/exist_userid/:user_id', function(req, res) {
+    connection.query('SELECT user_id FROM users WHERE user_id ="' + req.params.user_id + '"', function(err, result) {
+        if (err) throw err;
+        console.log(result);
+
+        if (result.length === 0) {
+            // Number not exist
+            res.send('false')
+
+        } else {
+            // Number exist
+            res.send('true')
+        }
+
+    });
+
+});
+
+
+
+
+
+// Refer Point
+app.post('/refer', function(req, res) {
+    let ref_id = req.body.ref_id;
+    
+    connection.query('SELECT * FROM users WHERE user_id ="' + ref_id + '"', function(err, result) {
+        if (err) throw err;
+        console.log(result);
+        
+        if (result.length === 0) {
+            // UserID not Exist 
+
+            res.send({
+                result: false,
+                error: 'UserId is not exist'
+            })
+
+        } else {
+               // UserID exist
+
+            var oldBal = parseInt(result[0].current_balance);
+            var newBal = oldBal + 20;
+            var updateBalance = newBal.toString();
+
+            var sql2 = "UPDATE users SET current_balance = '" + updateBalance + "' WHERE user_id = '" + ref_id + "'";
+            connection.query(sql2, function(err, result) {
+                if (!err) {
+
+                    res.send({
+                        result: true,
+                        newbal: newBal,
+                        oldBal: oldBal,
+                        error: 'refer bonus added'
+                    })
+
+                } else {
+
+                    res.send({
+                        result: false,
+                        error: 'refer bonus update failed',
+                        msg: err
+                    })
+                }
+            });
+
+
+        }
+
+    });
+
+
+
+
+});
+
+
+
+
+
+
+
+
+// Registration new
+app.post('/register', function(req, res) {
+
+    let user_id = req.body.user_id;
+    let number = req.body.number;
+    let email = req.body.email;
+
+
+
+    connection.query('SELECT user_id FROM users WHERE user_id ="' + user_id + '"', function(err, result) {
+        if (err) throw err;
+        console.log(result);
+
+        if (result.length === 0) {
+            // UserID not Exist 
+
+
+
+            connection.query('SELECT number FROM users WHERE number ="' + number + '"', function(err, result) {
+                if (err) throw err;
+                console.log(result);
+
+                if (result.length === 0) {
+                    // Number not exist
+
+                    connection.query('SELECT email FROM users WHERE email ="' + email + '"', function(err, result) {
+                        if (err) throw err;
+                        console.log(result);
+
+                        if (result.length === 0) {
+                            // Email not exist
+
+
+
+
+                            sql = "INSERT INTO users (user_id, number, club, name, email, password,image,total_game, club_balance, current_balance, profit_balance, parent_refer_id, user_type, transfer_in, transfer_out, incentive, active_status) VALUES ('" + req.body.user_id + "', '" + req.body.number + "', '" + req.body.club + "','" + req.body.name + "','" + req.body.email + "', '" + req.body.password + "', '"+ req.body.image + "', '"+ req.body.total_game + "', '" + req.body.club_balance + "', '" + req.body.current_balance + "', '" + req.body.profit_balance + "', '" + req.body.parent_refer_id + "', '" + req.body.user_type + "', '" + req.body.transfer_in + "', '" + req.body.transfer_out + "', '" + req.body.incentive + "', '" + req.body.active_status + "')";
+                            connection.query(sql, function(err, result) {
+
+                                if (!err) {
+
+                                    res.send({
+                                        result: true,
+                                        error: 'Registration success'
+                                    })
+
+                                } else {
+
+                                    res.send({
+                                        result: false,
+                                        error: 'Registration failed',
+                                        msg:err
+                                    })
+                                }
+
+                            });
+
+
+
+
+                        } else {
+                            // Email exist
+                            res.send({
+                                result: false,
+                                error: 'Email already in user'
+                            })
+                        }
+
+                    });
+
+
+
+                } else {
+                    // Number exist
+                    res.send({
+                        result: false,
+                        error: 'Number already in user'
+                    })
+                }
+
+            });
+
+
+
+
+        } else {
+            // UserID exist
+            res.send({
+                result: false,
+                error: 'UserId already in user'
+            })
+        }
+
+    });
+
+
+
+
+});
+
+
+
+
+
+
+// Login
+app.get('/login/:user_id/:password', (req, res) => {
+    connection.query('SELECT * FROM users WHERE user_id = ? AND password = ? ', [req.params.user_id, req.params.password], (err, rows, fields) => {
+        if (!err) {
+            if (rows.length === 0) {
+                res.send('[]');
+            } else {
+                res.send(rows)
+            }
+
+        } else {
+            console.log(err)
+        }
+    })
+
+
+});
+
+
+
+
+// Get User Details
+app.get('/users/:user_id', (req, res) => {
+    connection.query('SELECT * FROM users WHERE user_id = ?', [req.params.user_id], (err, rows, fields) => {
+        if (!err) {
+            res.send(rows)
+        } else {
+              res.send({
+                  result: 'error',
+                  msg:err
+                  
+              })
+              
+        }
+    })
+});
+
+
+
+
+// Get User Details using email
+app.get('/users_email/:email', (req, res) => {
+    connection.query('SELECT * FROM users WHERE email = ?', [req.params.email], (err, rows, fields) => {
+        if (!err) {
+            res.send(rows)
+        } else {
+              res.send({
+                  result: 'error',
+                  msg:err
+                  
+              })
+              
+        }
+    })
+});
+
+
+
+
+// Get All Users
+app.get('/users', (req, res) => {
+    connection.query('SELECT * FROM users', (err, rows, fields) => {
+        if (!err) {
+            res.send(rows)
+
+        } else {
+            console.log(err)
+        }
+    })
+
+});
+
+
+
+// Get All Users
+app.get('/block_list', (req, res) => {
+    connection.query('SELECT * FROM users WHERE active_status = "block"', (err, rows, fields) => {
+        if (!err) {
+            res.send(rows)
+
+        } else {
+            console.log(err)
+        }
+    })
+
+});
+
+
+
+
+// Complain Message
+app.post('/complain', function(req, res) {
+
+    let user_id = req.body.user_id;
+    let message = req.body.message;
+    let date = req.body.date;
+
+    sql = "INSERT INTO complain (user_id, message, date) VALUES ('" + user_id + "', '" + message + "', '" + date + "')";
+    connection.query(sql, function(err, result) {
+
+        if (!err) {
+
+            res.send({
+                result: true,
+                error: 'message sent successfully'
+            })
+
+        } else {
+
+            res.send({
+                result: false,
+                error: 'message send failed',
+                msg: err
+            })
+        }
+
+    });
+
+});
+
+
+
+
+// Update image 
+app.put('/image_update/:user_id', function(req, res) {
+    let a = req.body.value;
+    console.log(a)
+    var sql2 = "UPDATE users SET image = '" + a + "' WHERE user_id = '" + req.params.user_id + "'";
+    connection.query(sql2, function(err, result) {
+        if (!err) {
+            res.send({
+                result: true,
+                error: 'Image Updated successfully'
+            })
+
+        } else {
+
+            res.send({
+                result: false,
+                error: 'Image Update Failed',
+                msg: err
+            })
+        }
+    });
+
+});
+
+
+// Update infoo 
+app.put('/userinfo_update/:user_id', function(req, res) {
+    let name = req.body.name;
+    let password = req.body.password;
+
+    var myquery = 'UPDATE users SET name =?, password=? WHERE user_id=?';
+            connection.query(myquery,[name,password,req.params.user_id], function(err, result) {
+                if (!err) {
+                    res.send({
+                        result: true,
+                        error: 'Updated successfully'
+                    })
+
+                } else {
+
+                    res.send({
+                        result: false,
+                        error: 'Update Failed',
+                        msg: err
+                    })
+                }
+            });
+
+
+
+});
+
+
+
+
+
+
+
+
+
+
+// Update club_balance 
+app.put('/club_balance_update/:user_id', function(req, res) {
+    let a = req.body.balance;
+    console.log(a)
+    var sql2 = "UPDATE users SET club_balance = '" + a + "' WHERE user_id = '" + req.params.user_id + "'";
+    connection.query(sql2, function(err, result) {
+        if (!err) {
+            res.send({
+                result: true,
+                error: 'Balance Updated successfully'
+            })
+
+        } else {
+
+            res.send({
+                result: false,
+                error: 'Balance Update Failed',
+                msg: err
+            })
+        }
+    });
+
+});
+
+
+
+
+// Update current_balance 
+app.put('/current_balance_update/:user_id', function(req, res) {
+    let a = req.body.balance;
+    console.log(a)
+    var sql2 = "UPDATE users SET current_balance = '" + a + "' WHERE user_id = '" + req.params.user_id + "'";
+    connection.query(sql2, function(err, result) {
+          if (!err) {
+            res.send({
+                result: true,
+                error: 'Balance Updated successfully'
+            })
+
+        } else {
+
+            res.send({
+                result: false,
+                error: 'Balance Update Failed',
+                msg: err
+            })
+        }
+
+    });
+
+});
+
+// Update profit_baalance 
+app.put('/profit_balance_update/:user_id', function(req, res) {
+    let a = req.body.balance;
+    console.log(a)
+    var sql2 = "UPDATE users SET profit_balance = '" + a + "' WHERE user_id = '" + req.params.user_id + "'";
+    connection.query(sql2, function(err, result) {
+           if (!err) {
+            res.send({
+                result: true,
+                error: 'Balance Updated successfully'
+            })
+
+        } else {
+
+            res.send({
+                result: false,
+                error: 'Balance Update Failed',
+                msg: err
+            })
+        }
+
+    });
+
+});
+
+
+
+
+
+
+
+
+// Update user_type 
+app.put('/user_type_update/:user_id', function(req, res) {
+    let a = req.body.user_type;
+    console.log(a)
+    var sql2 = "UPDATE users SET user_type = '" + a + "' WHERE user_id = '" + req.params.user_id + "'";
+    connection.query(sql2, function(err, result) {
+                if (!err) {
+            res.send({
+                result: true,
+                error: 'User Type Updated successfully'
+            })
+
+        } else {
+
+            res.send({
+                result: false,
+                error: 'User Type Update Failed',
+                msg: err
+            })
+        }
+
+
+    });
+
+});
+
+
+// Update transfer_in 
+app.put('/transfer_in_update/:user_id', function(req, res) {
+    let a = req.body.balance;
+    console.log(a)
+    var sql2 = "UPDATE users SET transfer_in = '" + a + "' WHERE user_id = '" + req.params.user_id + "'";
+    connection.query(sql2, function(err, result) {
+       if (!err) {
+            res.send({
+                result: true,
+                error: 'Transfer In successfully'
+            })
+
+        } else {
+
+            res.send({
+                result: false,
+                error: 'Transfer In Failed',
+                msg: err
+            })
+        }
+
+    });
+
+});
+
+
+// Update transfer_out 
+app.put('/transfer_out_update/:user_id', function(req, res) {
+    let a = req.body.balance;
+    console.log(a)
+    var sql2 = "UPDATE users SET transfer_out = '" + a + "' WHERE user_id = '" + req.params.user_id + "'";
+    connection.query(sql2, function(err, result) {
+        if (!err) {
+            res.send({
+                result: true,
+                error: 'Transfer Out successfully'
+            })
+
+        } else {
+
+            res.send({
+                result: false,
+                error: 'Transfer Out Failed',
+                msg: err
+            })
+        }
+
+    });
+
+});
+
+
+
+
+// Update incentive 
+app.put('/incentive_update/:user_id', function(req, res) {
+    let a = req.body.incentive;
+    console.log(a)
+    var sql2 = "UPDATE users SET incentive = '" + a + "' WHERE user_id = '" + req.params.user_id + "'";
+    connection.query(sql2, function(err, result) {
+       if (!err) {
+            res.send({
+                result: true,
+                error: 'Incentive Updated successfully'
+            })
+
+        } else {
+
+            res.send({
+                result: false,
+                error: 'Incentive Update Failed',
+                msg: err
+            })
+        }
+
+    });
+
+});
+
+
+// Active Status
+app.put('/active_status_update/:id', function(req, res) {
+    let a = req.body.active_status;
+    console.log(a)
+    var sql2 = "UPDATE users SET active_status = '" + a + "' WHERE id = '" + req.params.id + "'";
+    connection.query(sql2, function(err, result) {
+        if (!err) {
+            res.send({
+                result: true,
+                error: 'Active Status Updated successfully'
+            })
+
+        } else {
+
+            res.send({
+                result: false,
+                error: 'Active Status Update Failed',
+                msg: err
+            })
+        }
+
+    });
+
+});
+
+
+
+
+
+// withdraw post
+app.post('/withdraw', function(req, res) {
+
+    sql = "INSERT INTO withdraw (user_id, number, transfer_from, source, amount, net_amount,payment_status, date) VALUES ('" + req.body.user_id + "', '" + req.body.number + "', '" + req.body.transfer_from + "','" + req.body.source + "','" + req.body.amount + "', '" + req.body.net_amount + "', '" + req.body.payment_status + "', '" + req.body.date + "')";
+    connection.query(sql, function(err, result) {
+        if (!err) {
+            res.send({
+                result: true,
+                error: 'Request Sent successfully'
+            })
+
+        } else {
+
+            res.send({
+                result: false,
+                error: 'Request Send Failed',
+                msg: err
+            })
+        }
+
+    });
+
+
+
+
+});
+
+
+
+
+//Update Withdraw payment Status
+
+app.put('/update_withdraw_status/:status/:id', function(req , res) {
+
+   let statusX = req.params.status;
+   let mId = req.params.id;
+   mQuery = "UPDATE withdraw SET payment_status = '"+statusX+"' WHERE id = '"+mId+"' ";
+
+   connection.query(mQuery , function(err , resuult){
+
+
+      if(!err){
+
+        res.send({
+
+          result : true,
+
+
+        }
+        );
+
+      }else{
+
+        res.send({
+
+          result: false,
+          error: err
+
+        });
+
+      }
+
+
+   });
+
+
+});
+
+
+//Update Withdraw payment Status
+
+app.put('/update_withdraw_status/:statusc/:id', function(req , res) {
+
+   let statusX = req.params.statusc;
+   let mId = req.params.id;
+   mQuery = "UPDATE withdraw SET payment_status = '"+statusX+"' WHERE id = '"+mId+"' ";
+
+   connection.query(mQuery , function(err , resuult){
+
+
+      if(!err){
+
+        res.send({
+
+          result : true,
+
+
+        }
+        );
+
+      }else{
+
+        res.send({
+
+          result: false,
+          error: err
+
+        });
+
+      }
+
+
+   });
+
+
+});
+
+
+
+
+
+// Get Withdraw List
+app.get('/withdrawlist/:user_id', (req, res) => {
+    connection.query('SELECT * FROM withdraw WHERE user_id = ?', [req.params.user_id], (err, rows, fields) => {
+        if (!err) {
+            res.send(rows)
+        } else {
+              res.send({
+                  result: false,
+                  msg:err
+                  
+              })
+              
+        }
+    })
+});
+
+// Get All Withdraw List
+app.get('/all_withdrawlist', (req, res) => {
+    connection.query('SELECT * FROM withdraw', (err, rows, fields) => {
+        if (!err) {
+            res.send(rows)
+        } else {
+              res.send({
+                  result: false,
+                  msg:err
+                  
+              })
+              
+        }
+    })
+});
+
+
+
+
+
+
+// Insert PaymentSettings 
+app.post('/payment_settings_insert', function(req, res) {
+
+    var sql2 = "INSERT INTO payment_settings (user_id, bkash, rocket,nogod) VALUES ('" + req.body.user_id + "', '"+req.body.bkash+"','"+req.body.rocket+"','"+req.body.nogod+"')";
+    connection.query(sql2, function(err, result) {
+        if (!err) {
+            res.send({
+                result: true,
+                error: 'Number Added successfully'
+            })
+
+        } else {
+
+            res.send({
+                result: false,
+                error: 'Number Add failed',
+                msg: err
+            })
+        }
+
+    });
+
+});
+
+
+
+// Get PaymentSettings
+app.get('/payment_settings/:user_id', (req, res) => {
+    connection.query('SELECT * FROM payment_settings WHERE user_id = ?', [req.params.user_id], (err, rows, fields) => {
+        if (!err) {
+            if (rows.length === 0) {
+                res.send('[]');
+            } else {
+                res.send(rows)
+            }
+
+        } else {
+            console.log(err)
+        }
+    })
+
+});
+
+
+
+
+// Update PaymentSettings 
+app.put('/payment_settings_update_bkash/:user_id', function(req, res) {
+    let a = req.body.number;
+    console.log(a)
+    var sql2 = "UPDATE payment_settings SET bkash = '" + a + "' WHERE user_id = '" + req.params.user_id + "'";
+    connection.query(sql2, function(err, result) {
+        if (!err) {
+            res.send({
+                result: true,
+                error: 'Number Added successfully'
+            })
+
+        } else {
+
+            res.send({
+                result: false,
+                error: 'Number Add failed',
+                msg: err
+            })
+        }
+
+    });
+
+});
+
+// Update PaymentSettings 
+app.put('/payment_settings_update_rocket/:user_id', function(req, res) {
+    let a = req.body.number;
+    console.log(a)
+    var sql2 = "UPDATE payment_settings SET rocket = '" + a + "' WHERE user_id = '" + req.params.user_id + "'";
+    connection.query(sql2, function(err, result) {
+        if (!err) {
+            res.send({
+                result: true,
+                error: 'Number Added successfully'
+            })
+
+        } else {
+
+            res.send({
+                result: false,
+                error: 'Number Add failed',
+                msg: err
+            })
+        }
+
+    });
+
+});
+
+
+// Update PaymentSettings 
+app.put('/payment_settings_update_nogod/:user_id', function(req, res) {
+    let a = req.body.number;
+    console.log(a)
+    var sql2 = "UPDATE payment_settings SET nogod = '" + a + "' WHERE user_id = '" + req.params.user_id + "'";
+    connection.query(sql2, function(err, result) {
+        if (!err) {
+            res.send({
+                result: true,
+                error: 'Number Added successfully'
+            })
+
+        } else {
+
+            res.send({
+                result: false,
+                error: 'Number Add failed',
+                msg: err
+            })
+        }
+
+    });
+
+});
+
+
+// Send Money post
+app.post('/send_money_post', function(req, res) {
+
+    sql = "INSERT INTO send_money (sender_uid, reciever_uid, amount, comment, transfer_from, status,pay_option, date) VALUES ('" + req.body.sender_uid + "', '" + req.body.reciever_uid + "', '" + req.body.amount + "','" + req.body.comment + "','" + req.body.transfer_from + "', '" + req.body.status + "', '" + req.body.pay_option + "', '" + req.body.date + "')";
+    connection.query(sql, function(err, result) {
+        if (!err) {
+            res.send({
+                result: true,
+                error: 'Request Sent successfully'
+            })
+        } else {
+            res.send({
+                result: false,
+                error: 'Request Send Failed',
+                msg: err
+            })
+        }
+    });
+
+});
+
+
+
+
+
+
+//Update Fund payment Status Newww Ashiqqqq
+
+app.put('/update_fund_new/:amount/:status/:user_id/:id', function(req, res) {
+
+
+    let status = req.params.status;
+    let user_id = req.params.user_id;
+    let amount = req.params.amount;
+       let mId = req.params.id;
+
+    connection.query('SELECT * FROM users WHERE user_id = "' + user_id + '"  ', (err, rows, fields) => {
+        if (!err) {
+
+
+            var oldBal = parseInt(rows[0].current_balance);
+            var newBal = oldBal + parseInt(amount);
+            var updateBalance = newBal.toString();
+
+            var sql2 = "UPDATE users SET current_balance = '" + updateBalance + "' WHERE user_id = '" + user_id + "'";
+            connection.query(sql2, function(err, result) {
+                if (!err) {
+
+                    mQuery = "UPDATE add_fund SET status = '"+status+"' WHERE id = '"+mId+"' ";
+                    connection.query(mQuery, function(err, resuult) {
+
+
+                        if (!err) {
+
+                            res.send({
+                                result: true,
+                                newbal: newBal,
+                                oldBal: oldBal,
+                                msg: 'Add Fund Request Successfull'
+                            })
+
+                        } else {
+
+                            res.send({
+
+                                result: false,
+                                msg: 'Add Fund Request Not Successfull',
+                                error: err
+
+                            });
+
+                        }
+
+
+                    });
+
+
+                } else {
+
+                    res.send({
+                        result: false,
+                        msg: 'Balance update failed',
+                        error: err
+                    })
+                }
+            });
+
+
+        } else {
+            res.send({
+                result: false,
+                msg: 'No user data found',
+                error: err
+
+            })
+
+        }
+    })
+
+
+
+
+});
+
+
+
+
+
+//Update Fund payment Status
+
+app.put('/update_fund_status/:statusc/:id', function(req , res) {
+
+   let statusX = req.params.statusc;
+   let mId = req.params.id;
+   mQuery = "UPDATE add_fund SET status = '"+statusX+"' WHERE id = '"+mId+"' ";
+
+   connection.query(mQuery , function(err , resuult){
+
+
+      if(!err){
+
+        res.send({
+
+          result : true,
+
+
+        }
+        );
+
+      }else{
+
+        res.send({
+
+          result: false,
+          error: err
+
+        });
+
+      }
+
+
+   });
+
+
+});
+
+
+
+// Get All fund list
+app.get('/allfunds', (req, res) => {
+    connection.query('SELECT * FROM add_fund', (err, rows, fields) => {
+        if (!err) {
+            res.send(rows)
+
+        } else {
+            console.log(err)
+        }
+    })
+
+});
+
+
+
+// Get Pending Fund List
+app.get('/pending_funds', (req, res) => {
+    connection.query('SELECT * FROM add_fund WHERE status = "pending"', (err, rows, fields) => {
+        if (!err) {
+            res.send(rows)
+
+        } else {
+            console.log(err)
+        }
+    })
+
+});
+
+
+
+
+
+// Get Fund Send Money userID
+app.get('/transferlist/:user_id', (req, res) => {
+    connection.query('SELECT * FROM send_money WHERE sender_uid = ? OR reciever_uid = ?', [req.params.user_id, req.params.user_id], (err, rows, fields) => {
+        if (!err) {
+            res.send(rows)
+        } else {
+              res.send({
+                  result: false,
+                  msg:err
+                  
+              })
+              
+        }
+    })
+});
+
+
+
+
+
+// Get Fund List Send Money userID
+app.get('/transferlist2/:user_id', (req, res) => {
+    connection.query('SELECT * FROM send_money WHERE sender_uid = ?', [req.params.user_id], (err, rows, fields) => {
+        if (!err) {
+            res.send(rows)
+        } else {
+              res.send({
+                  result: false,
+                  msg:err
+                  
+              })
+              
+        }
+    })
+});
+
+
+
+
+// Insert add Fund 
+app.post('/add_fund_insert', function(req, res) {
+
+    var sql2 = "INSERT INTO add_fund (user_id, amount, number, tx,pay_option,status, date) VALUES ('" + req.body.user_id + "', '"+req.body.amount+"','"+req.body.number+"','"+req.body.tx+"','"+req.body.pay_option+"','"+req.body.status+"','"+req.body.date+"')";
+    connection.query(sql2, function(err, result) {
+        if (!err) {
+            res.send({
+                result: true,
+                error: 'Fund request Sent successfully'
+            })
+
+        } else {
+
+            res.send({
+                result: false,
+                error: 'Fund requestfailed',
+                msg: err
+            })
+        }
+
+    });
+
+});
+
+
+// Get Fund List user Id
+app.get('/fundlist/:user_id', (req, res) => {
+    connection.query('SELECT * FROM add_fund WHERE user_id = ?', [req.params.user_id], (err, rows, fields) => {
+        if (!err) {
+            res.send(rows)
+        } else {
+              res.send({
+                  result: false,
+                  msg:err
+                  
+              })
+              
+        }
+    })
+});
+
+
+
+
+
+
+
+
+// Insert Admin Transfer History 
+app.post('/admin_balance', function(req, res) {
+    var sql2 = "INSERT INTO admin_balance_history (from_id,user_id, amount, source,  date) VALUES ('" + req.body.from_id + "', '" + req.body.user_id + "', '"+req.body.amount+"','"+req.body.source+"','"+req.body.date+"')";
+    connection.query(sql2, function(err, result) {
+        if (!err) {
+            res.send({
+                result: true,
+                error: 'Fund request Sent successfully'
+            })
+
+        } else {
+
+            res.send({
+                result: false,
+                error: 'Fund requestfailed',
+                msg: err
+            })
+        }
+
+    });
+
+});
+
+
+
+// Get Fund List user Id
+app.get('/admin_balance_list/:user_id', (req, res) => {
+    connection.query('SELECT * FROM admin_balance_history WHERE user_id = ?', [req.params.user_id], (err, rows, fields) => {
+        if (!err) {
+            res.send(rows)
+        } else {
+              res.send({
+                  result: false,
+                  msg:err
+                  
+              })
+              
+        }
+    })
+});
+
+
+// Get All admin balance list
+app.get('/all_admin_balance', (req, res) => {
+    connection.query('SELECT * FROM admin_balance_history', (err, rows, fields) => {
+        if (!err) {
+            res.send(rows)
+
+        } else {
+            console.log(err)
+        }
+    })
+
+});
+
+
+
+
+
+
+// user_id, number, club, name, email, password, club_balance, current_balance, 
+// profit_baalance, parent_refer_id, user_type, transfer_in, transfer_out, incentive, active_status
+
+
+
+
+// * * * * * *  * * * * * * * * * *  * * * * * * * * *  * * * * * * * * * * Aashiqqqq * * * * * * * * *  * * * * * * * * * *  * * * * * * * * *  * * * * * * * * * *  * * * * * * * * *  * * * * * * * * * *  * * *
+
+
+
+
+// * * * * * *  * * * * * * * * * *  * * * * * * * * *  * * * * * * * * * * Adminnn* * * * * * * * *  * * * * * * * * * *  * * * * * * * * *  * * * * * * * * * *  * * * * * * * * *  * * * * * * * * * *  * * *
+
+
+
+// Insert Admin
+app.post('/admin_insert', function(req, res) {
+
+    connection.query('SELECT email FROM admin_users WHERE email ="' + req.body.email + '"', function(err, result) {
+        if (err) throw err;
+        console.log(result);
+
+        if (result.length === 0) {
+            // Email not exist
+
+            var sql2 = "INSERT INTO admin_users (email, password, type) VALUES ('" + req.body.email + "', '" + req.body.password + "','" + req.body.type + "')";
+            connection.query(sql2, function(err, result) {
+                if (!err) {
+                    res.send({
+                        result: true,
+                        error: 'Fund request Sent successfully'
+                    })
+
+                } else {
+
+                    res.send({
+                        result: false,
+                        error: 'Fund requestfailed',
+                        msg: err
+                    })
+                }
+
+            });
+
+        } else {
+            // Email exist
+            res.send('true')
+        }
+
+    });
+
+});
+
+
+
+// Admin Login
+app.get('/admin/:email/:password', (req, res) => {
+    connection.query('SELECT * FROM admin_users WHERE email = ? AND password = ? ', [req.params.email, req.params.password], (err, rows, fields) => {
+        if (!err) {
+            if (rows.length === 0) {
+                 res.send({
+                  result: false,
+                  type: 'null'
+                  
+              })
+            } else {
+                 res.send({
+                  result: true,
+                  type: rows[0].type
+              })
+            }
+        } else {
+            console.log(err)
+        }
+    })
+
+
+});
+
+
+
+// Get All Admin
+app.get('/admins', (req, res) => {
+    connection.query('SELECT * FROM admin_users', (err, rows, fields) => {
+        if (!err) {
+            res.send(rows)
+
+        } else {
+            console.log(err)
+        }
+    })
+
+});
+
+
+
+
+// Get Admin Details
+app.get('/admins/:email', (req, res) => {
+    connection.query('SELECT * FROM admin_users WHERE email = ?', [req.params.email], (err, rows, fields) => {
+        if (!err) {
+            res.send(rows)
+        } else {
+              res.send({
+                  result: 'error',
+                  msg:err
+                  
+              })
+              
+        }
+    })
+});
+
+
+
+
+
+
+
+
+
+
+
+
+// * * * * * *  * * * * * * * * * *  * * * * * * * * *  * * * * * * * * * *Adminn* * * * * * * * *  * * * * * * * * * *  * * * * * * * * *  * * * * * * * * * *  * * * * * * * * *  * * * * * * * * * *  * * *
+
+
+
+
+
+
+
+
+
+app.post('/uploadx', async (req, res) => {
+  try {
+      if(!req.files) {
+          res.send({
+              status: false,
+              message: 'No file uploaded'
+          });
+      } else {
+          //Use the name of the input field (i.e. "avatar") to retrieve the uploaded file
+          let avatar = req.files.avatar;
+          
+          //Use the mv() method to place the file in upload directory (i.e. "uploads")
+          avatar.mv('./uploads/' + avatar.name);
+
+          //send response
+          res.send({
+              url: "http://api.allgame365.online/"+avatar.name
+             
+          });
+      }
+  } catch (err) {
+      res.status(500).send(err);
+  }
+});
+
+
+
+
+
+app.post('/uploadx_path', async (req, res) => {
+  try {
+    
+          //Use the name of the input field (i.e. "avatar") to retrieve the uploaded file
+          let avatar = req.body.avatar;
+          
+          //Use the mv() method to place the file in upload directory (i.e. "uploads")
+          avatar.mv('./uploads/' + avatar);
+
+          //send response
+          res.send({
+              url: "http://api.allgame365.online/"+avatar
+             
+          });
+      
+  } catch (err) {
+      res.status(500).send(err);
+  }
+});
+
+
+    
+var form = "<!DOCTYPE HTML><html><body>" +
+"<form method='post' action='/upload' enctype='multipart/form-data'>" +
+"<input type='file' name='upload'/>" +
+"<input type='submit' /></form>" +
+"</body></html>";
+
+app.get('/upload_image', function (req, res){
+  res.writeHead(200, {'Content-Type': 'text/html' });
+  res.end(form);
+
+});
+
+// Include the node file module
+var fs = require('fs');
+
+storage = multer.diskStorage({
+    destination: './uploads/',
+    filename: function(req, file, cb) {
+      return crypto.pseudoRandomBytes(16, function(err, raw) {
+        if (err) {
+          return cb(err);
+        }
+        return cb(null, "" + (raw.toString('hex')) + (path.extname(file.originalname)));
+      });
+    }
+  });
+
+
+// Post files
+app.post(
+  "/upload",
+  multer({
+    storage: storage
+  }).single('upload'), function(req, res) {
+    console.log(req.file);
+    console.log(req.body);
+    res.send("http://api.khelo.live/uploads/" + req.file.filename);
+    //res.redirect("/uploads/" + req.file.filename);
+    console.log(req.file.filename);
+    return res.status(200).end();
+  });
+
+app.get('/uploads/:upload', function (req, res){
+  file = req.params.upload;
+  console.log(req.params.upload);
+  var img = fs.readFileSync(__dirname + "/uploads/" + file);
+  res.writeHead(200, {'Content-Type': 'image/png' });
+  res.end(img, 'binary');
+
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+app.get('/get_bid_history/:uid', function(req , res){
+
+    let myUid = req.params.uid;
+
+    mQuery = "SELECT * FROM game_bid WHERE user_id = '"+myUid+"' ";
+
+
+    connection.query(mQuery , (err , rows , fields)=>{
+
+      if(!err){
+        res.send(rows)
+
+      }else{
+        res.send({
+          status: false,
+          output: err
+        })
+      }
+
+    });
+
+});
+
+
+
+
+
+
+// Get All Game from database with category
+
+app.get('/get_game/:cat', function(req , res){
+
+  let catx = req.params.cat;    
+    
+  mQuery = "SELECT * FROM game WHERE category = '"+catx+"' ORDER BY id DESC , id DESC";
+  connection.query(mQuery , (err , rows , fields)=>{
+    if(!err){
+      
+      res.send(rows);
+     
+      
+      /*  for(var i in rows){
+  
+             if(rows[i].hide_status != "true"){
+
+                    res.send(rows[i]);
+             }
+     
+        } */
+
+     
+     
+
+    }else{
+      res.send({
+        status: false,
+        output: err
+      })
+    }
+  })
+});
+
+
+
+
+
+// Get All Game from database without category
+
+app.get('/get_game_all', function(req , res){
+
+  mQuery = "SELECT * FROM game";
+  connection.query(mQuery , (err , rows , fields)=>{
+    if(!err){
+      res.send(
+         
+         rows
+      )
+
+    }else{
+      res.send({
+        status: false,
+        output: err
+      })
+    }
+  })
+});
+
+
+
+// Get Specific  Game with  gameID 
+
+app.post('/get_game_from_id', function(req , res){
+  let mGameId = req.body.game_id;
+
+  mQuery = "SELECT * FROM game WHERE game_id = '"+mGameId+"'";
+  connection.query(mQuery , (err , rows , fields)=>{
+    if(!err){
+      res.send({
+        status: true,
+        output: rows
+      })
+
+    }else{
+      res.send({
+        status: false,
+        output: err
+      })
+    }
+  })
+});
+
+
+
+
+/// Game Bid list get from game id 
+
+app.get('/get_game_bid_list/:xx',function(req , res){
+
+  let x = req.params.xx;
+
+  mQuery = "SELECT gb.id, gb.game_id , gb.user_id , gb.bid_amount , gb.percentage , gb.win_status , gb.user_ans , game.correct_ans , users.profit_balance FROM game_bid gb JOIN users ON users.user_id = gb.user_id JOIN game ON game.game_id = gb.game_id WHERE gb.game_id ='"+x+"' ";
+  connection.query(mQuery , (err , rows , fields)=>{
+    if(!err){
+      res.send(
+        rows
+      )
+
+    }else{
+      res.send({
+        status: false,
+        output: err
+      })
+    }
+  })
+
+
+});
+
+
+
+
+app.put('/update_gamebid_winstatus/:id',function(req ,res){
+
+    let mQuery = "UPDATE `game_bid` SET `win_status` = 'true' WHERE `game_bid`.`id` = '"+req.params.id+"' ;";
+
+
+  connection.query(mQuery , function(err , result){
+
+    if(!err){
+
+      res.send({
+        status: true,
+        output: result
+      })
+
+    }else{
+
+      res.send({
+        status: false,
+        output: err
+      })
+
+    }
+
+  });
+
+});
+
+
+
+//user game bid 
+
+app.post('/game_bid', function(req,res){
+
+
+  let game_id = req.body.game_id;
+  let uid = req.body.uid;
+  let bid_amount = req.body.bid_amount;
+  let user_ans = req.body.user_ans;
+  let percentage = req.body.percentage;
+
+
+  mQuery = "INSERT into game_bid (game_id , user_id ,bid_amount , user_ans , percentage) VALUES ('"+game_id+"','"+uid+"','"+bid_amount+"','"+user_ans+"','"+percentage+"')"
+
+  connection.query(mQuery,function(err , result){
+    if(!err){
+        res.send("true")
+        
+    }else{
+        res.send({
+          status: false,
+          output: err
+        })
+    }
+});
+
+});
+
+
+
+
+
+// Update Game row
+
+app.put('/game_row_update', function(req, res){
+
+  let row_name = req.body.row_name;
+  let myValue = req.body.myValue;
+  let game_id = req.body.game_id;
+
+  mQuery = "UPDATE game SET '"+row_name+"' = '"+myValue+"' WHERE game_id = '"+game_id+"'";
+  
+  mQuery2 = "UPDATE `game` SET `"+row_name+"` = '"+myValue+"' WHERE `game_id` = '"+game_id+"' ";
+
+  connection.query(mQuery2 , function(err , result){
+
+    if(!err){
+
+      res.send({
+        status: true,
+        output: result
+      })
+
+    }else{
+
+      res.send({
+        status: false,
+        output: err
+      })
+
+    }
+
+  })
+
+
+});
+
+
+
+
+
+
+
+app.post('/insert_game', function(req , res){
+
+  let mId = req.body.id;
+  let  mFlag = req.body.flag;
+  let  mLogo = req.body.logo;
+  let  mGameType = req.body.game_type;
+  let  mCategory = req.body.category;
+  let  mLiveStatus = req.body.live_status;
+  let  mQuestion = req.body.question;
+  let  mSubQuestion = req.body.sub_question;
+  let  mAns1 = req.body.ans1;
+  let  mAns2 = req.body.ans2;
+  let  mAns3 = req.body.ans3;
+  let  mAns4 = req.body.ans4;
+  let  mAns5 = req.body.ans5;
+  
+  let  mPerc1 = req.body.perc1;
+  let  mPerc2 = req.body.perc2;
+  let  mPerc3 = req.body.perc3;
+  let  mPerc4 = req.body.perc4;
+  let  mPerc5 = req.body.perc5;
+  let  mGameId = req.body.game_id;
+  let  mDate = req.body.date;
+  let  mHideStatus = req.body.hide_status;
+  let  mCorrectAns = req.body.correct_ans;
+  let  mGamePosition = req.body.game_position;
+
+  mQuery = "INSERT INTO game (flag ,logo , game_type , category , live_status ,question , sub_question , ans1,ans2,ans3,ans4,ans5 , perc1, perc2, perc3 , perc4,  perc5 , game_id , date,hide_status , correct_ans , game_position) VALUES ('"+mFlag+"','"+mLogo+"', '"+mGameType+"' ,'"+mCategory+"','"+mLiveStatus+"','"+mQuestion+"','"+mSubQuestion+"','"+mAns1+"','"+mAns2+"','"+mAns3+"','"+mAns4+"','"+mAns5+"','"+mPerc1+"','"+mPerc2+"','"+mPerc3+"','"+mPerc4+"','"+mPerc5+"','"+mGameId+"','"+mDate+"','"+mHideStatus+"','"+mCorrectAns+"','"+mGamePosition+"') ";
+
+  connection.query(mQuery,function(err , result){
+    if(!err){
+        res.send({
+
+          status: true,
+          output: result
+
+        })
+        
+    }else{
+        res.send({
+
+          status: false,
+          outpu: err
+
+        })
+    }
+});
+
+
+
+
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Game Update
+
+app.put('/update_game', function(req, res){
+
+
+  let game_id = req.body.game_id;
+  let live_status = req.body.live_status;
+  let ans1 = req.body.ands1;
+  let ans2 = req.body.ands2;
+  let ans3 = req.body.ands3;
+  let ans4 = req.body.ands4;
+  let ans5 = req.body.ands5;
+  
+  let perc1 = req.body.perc1;
+  let perc2 = req.body.perc2;
+  let perc3 = req.body.perc3;
+  let perc4 = req.body.perc4;
+  let perc5 = req.body.perc5;
+  
+  let hide_status = req.body.hide_status;
+  let correct_ans = req.body.correct_ans;
+  let game_position = req.body.game_position;
+  
+  let mQuery = "UPDATE game SET live_status = '"+live_status+"',  ans1 = '"+ans1+"', ans2 = '"+ans2+"', ans3 = '"+ans3+"', ans4 = '"+ans4+"', ans5 = '"+ans5+"', perc1 = '"+perc1+"', perc2 = '"+perc2+"', perc3 = '"+perc3+"', perc4 = '"+perc4+"', perc5 = '"+perc5+"', hide_status = '"+hide_status+"', correct_ans = '"+correct_ans+"', game_position = '"+game_position+"' WHERE game_id = '"+game_id+"'";
+
+  connection.query(mQuery , function(err , result){
+
+    if(!err){
+
+      res.send({
+        status: true,
+        output: result
+      })
+
+    }else{
+
+      res.send({
+        status: false,
+        output: err
+      })
+
+    }
+
+  });
+
+
+});
+
+
+
+app.delete('/delete_game', function(req , res){
+
+  let game_id = req.body.game_id;
+
+  mQuery = "DELETE FROM game WHERE game_id = '"+game_id+"' ";
+
+  connection.query(mQuery , function(err , result){
+
+
+    if(!err){
+
+      res.send({
+        status: true,
+        output: result
+      })
+
+    }else{
+
+      res.send({
+        status: false,
+        output: err
+      })
+
+    }
+
+  });
+
+});
+
+
+
+
+
+
+
+
+app.put('/member_update', function(req, res){
+
+
+  let user_id = req.body.user_id;
+  let number = req.body.number;
+  let club = req.body.club;
+  let name = req.body.name;
+  let email = req.body.email;
+  let password = req.body.password;
+  let total_game = req.body.total_game;
+  let club_balance = req.body.club_balance;
+  let current_balance = req.body.current_balance;
+  let profit_balance = req.body.profit_balance;
+  let parent_refer_id = req.body.parent_refer_id;
+  let user_type = req.body.user_type;
+  let transfer_in = req.body.transfer_in;
+  let transfer_out = req.body.transfer_out;
+  let incentive = req.body.incentive;
+  let active_status = req.body.active_status;
+  
+
+  mQuery = "UPDATE users SET user_id = '"+user_id+"',number = '"+number+"', club = '"+club+"',name = '"+name+"',email = '"+email+"',password = '"+password+"',total_game = '"+total_game+"',club_balance = '"+club_balance+"',current_balance = '"+current_balance+"',profit_balance = '"+profit_balance+"',parent_refer_id = '"+parent_refer_id+"',user_type = '"+user_type+"',transfer_in = '"+transfer_in+"',transfer_out = '"+transfer_out+"',incentive = '"+incentive+"',active_status = '"+active_status+"'  WHERE user_id = '"+user_id+"' ";
+
+  connection.query(mQuery , function(err , result){
+
+
+    if(!err){
+
+      res.send({
+        status: true,
+        output: result
+      })
+
+    }else{
+
+      res.send({
+        status: false,
+        output: err
+      })
+
+    }
+
+  });
+
+
+});
+
+
+
+
+
+app.put('/admin_update', function(req, res){
+
+
+  let email = req.body.email;
+  let password = req.body.password;
+  let type = req.body.type;
+
+  
+
+  mQuery = "UPDATE admin_users SET email = '"+email+"',password = '"+password+"', type = '"+type+"' WHERE email = '"+email+"' ";
+
+  connection.query(mQuery , function(err , result){
+
+
+    if(!err){
+
+      res.send({
+        status: true,
+        output: result
+      })
+
+    }else{
+
+      res.send({
+        status: false,
+        output: err
+      })
+
+    }
+
+  });
+
+
+});
+
+
+
+
+
